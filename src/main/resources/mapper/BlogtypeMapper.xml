@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blog.dao.BlogtypeMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.blog.entity.Blogtype">
+        <id column="id" property="id" />
+        <result column="typeName" property="typeName" />
+        <result column="orderNo" property="orderNo" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, typeName, orderNo
+    </sql>
+
+    <!--查询所有的博客分类名称以及每个分类下博客的数量，对应首页显示按照博客类型分类统计博客数-->
+    <select id="findBlogTypeNameAndBlogCount" resultType="com.blog.entity.Blogtype">
+        SELECT t1.id,t1.typeName,COUNT(t2.id) AS blogCount
+        FROM t_blogtype t1
+        LEFT JOIN t_blog t2
+        ON t1.id=t2.typeId
+        GROUP BY t1.typeName
+    </select>
+
+</mapper>

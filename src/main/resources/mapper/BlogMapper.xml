@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blog.dao.BlogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.blog.entity.Blog">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="summary" property="summary" />
+        <result column="releaseDate" property="releaseDate" />
+        <result column="clickHit" property="clickHit" />
+        <result column="replyHit" property="replyHit" />
+        <result column="content" property="content" />
+        <result column="typeId" property="typeId" />
+        <result column="keyWord" property="keyWord" />
+    </resultMap>
+
+    <resultMap id="blogTypeResultMap" type="com.blog.entity.Blog" extends="BaseResultMap">
+        <association property="blogtype" javaType="com.blog.entity.Blogtype">
+            <id property="id" column="type_id"/>
+            <result property="typeName" column="typeName"/>
+        </association>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, title, summary, releaseDate, clickHit, replyHit, content, typeId, keyWord
+    </sql>
+
+    <!--根据日期分组，查询每个月博客的数量，对应首页显示按日期分组统计博客数功能-->
+    <select id="findBlogDateAndCount" resultType="com.blog.entity.Blog">
+        SELECT DATE_FORMAT(releaseDate,'%Y年%m月') AS releaseDateStr, COUNT(id) AS blogCount
+        FROM t_blog
+        GROUP BY DATE_FORMAT(releaseDate,'%Y年%m月')
+        ORDER BY releaseDateStr DESC
+    </select>
+
+    <!--分页查询博客列表（对应首页显示博客标题，摘要等信息）-->
+    <select id="findBlogListByPage" resultType="com.blog.entity.Blog">
+        SELECT b.*
+        FROM t_blog b
+        <where>
+            <if test="blog.keyWord!=null and blog.keyWord!='' ">
+                AND b.keyWord LIKE CONCAT('%',#{blog.keyWord},'%')
+            </if>
+            <if test="blog.typeId!=null ">
+                AND b.typeId=#{blog.typeId}
+            </if>
+            <if test="blog.releaseDateStr!=null and blog.releaseDateStr!='' ">
+                AND DATE_FORMAT(b.releaseDate,'%Y年%m月')=#{blog.releaseDateStr}
+            </if>
+        </where>
+        ORDER BY b.releaseDate DESC
+    </select>
+
+    <!--根据id查询博客（对应首页点击博客标题，发布日期等超链接时，跳转到博客详情页面，查看博客具体内容）-->
+    <select id="findBlogContentById" resultMap="blogTypeResultMap" >
+        SELECT t1.*,t2.id AS type_id,t2.typeName
+        FROM t_blog t1
+        JOIN t_blogtype t2
+        ON t1.typeId=t2.id
+        WHERE t1.id=#{id}
+    </select>
+
+    <!--根据id查询下一篇博客（对应首页博客中间分页列表中的下一篇按钮）-->
+    <select id="findPreBlogById" resultType="com.blog.entity.Blog">
+        SELECT *
+        FROM t_blog
+        WHERE id &lt; #{id}
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <!--根据id查询下一篇博客（对应首页博客中间分页列表中的下一篇按钮）-->
+    <select id="findNextBlogById" resultType="com.blog.entity.Blog">
+        SELECT *
+        FROM t_blog
+        WHERE id &gt; #{id}
+        ORDER BY id
+        LIMIT 1
+    </select>
+
+
+</mapper>
